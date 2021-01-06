@@ -1,5 +1,4 @@
 adapter       <- scan("input.txt")
-dev           <- max(adapter) + 3
 adaptdiff     <- cbind(adapter - 1, adapter - 2, adapter - 3)
 
 colnames(adaptdiff) <- c("d1", "d2", "d3")
@@ -31,3 +30,22 @@ countdiff <- function(adapt) {
 part1 <- countdiff(adaptdiff)
 part1[3] <- part1[3] + 1 #include personal device
 part1[1] * part1[3]
+
+# Part 2 needs a different approach entirely
+# Adapted from another solution (couldn't figure this out myself)
+sorted <- sort(adapter)
+jolts <- c(0, sorted, max(adapter) + 3)
+
+library(memoise)
+plug_arrangements <- function(jolts) {
+        if (length(jolts) == 1) {
+                return(1)
+        }
+        possible <- which(jolts[2:4] - jolts[1] <= 3)
+
+        sum(sapply(possible, function(x) {
+                plug_arrangements(jolts[-1:-x])
+        }))
+}
+plug_arrangements <- memoise(plug_arrangements)
+plug_arrangements(jolts)
