@@ -65,4 +65,48 @@ part1 <- function(filename) {
         sum(sapply(g_memory, as_decimal))
 }
 
+decode_mask <- function(strvec) {
+        m    <- strvec
+        nx   <- sum(m == "X")
+        comb <- do.call(expand.grid, rep(list(0:1), nx))
+        t(apply(comb, 1, function(x, m) {
+                m[m == "X"] <- x
+                as.logical(as.numeric(m))
+        }, m = m))
+}
+
+apply_mask2 <- function(mem, maskstr) {
+        mask <- as_mask(maskstr)
+        mem[attr(mask, "i")] <- mem[attr(mask, "i")] | mask
+        mem <- as.character(as.numeric(mem))
+        mem[-attr(mask, "i")] <- "X"
+        mem
+}
+
+mem_write2 <- function(addr, value) {
+        g_memory[[as.character(addr)]] <<- as_binary(value)
+}
+
+init_memory2 <- function(df) {
+        new.env(parent = emptyenv(), size = unique(df$memsize), hash = TRUE)
+}
+
+part2 <- function(filename) {
+        input <- read_input(filename)
+        g_memory <- init_memory2(input)
+        ## Changes the enclosing environment so 'g_memory' is visible
+        environment(mem_write2) <- environment()
+        invisible(apply(input,
+                        1,
+                        function(x) {
+                                tmp <- apply_mask2(as_binary(
+                                        as.numeric(x["memaddr"])), x["mask"])
+                                addrs <- apply(decode_mask(tmp), 1, as_decimal)
+                                sapply(addrs, mem_write2,
+                                       as.numeric(x["value"]))
+                        }))
+        sum(unlist(eapply(g_memory, as_decimal, USE.NAMES = FALSE)))
+}
+
 part1("input.txt")
+part2("input.txt")
